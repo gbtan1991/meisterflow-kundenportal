@@ -1,0 +1,71 @@
+{
+  "name": "Bewertung",
+  "type": "object",
+  "properties": {
+    "kunde_id": {
+      "type": "string"
+    },
+    "kunde_name": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "telefon": {
+      "type": "string"
+    },
+    "nachricht": {
+      "type": "string"
+    },
+    "plattform": {
+      "type": "string",
+      "enum": [
+        "google",
+        "facebook",
+        "trustpilot",
+        "intern"
+      ],
+      "default": "google"
+    },
+    "typ": {
+      "type": "string",
+      "enum": [
+        "google",
+        "intern"
+      ],
+      "default": "google"
+    },
+    "sterne": {
+      "type": "number"
+    },
+    "kommentar": {
+      "type": "string"
+    },
+    "antwort": {
+      "type": "string"
+    },
+    "bewertungs_datum": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "angefragt",
+        "erinnerung_gesendet",
+        "erhalten",
+        "keine_antwort",
+        "beantwortet"
+      ],
+      "default": "angefragt"
+    },
+    "versand_datum": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": []
+}

@@ -1,0 +1,45 @@
+{
+  "name": "Rechnung",
+  "type": "object",
+  "properties": {
+    "nummer": {
+      "type": "string"
+    },
+    "titel": {
+      "type": "string"
+    },
+    "kunde_id": {
+      "type": "string"
+    },
+    "kunde_name": {
+      "type": "string"
+    },
+    "datum": {
+      "type": "string",
+      "format": "date"
+    },
+    "faellig_am": {
+      "type": "string",
+      "format": "date"
+    },
+    "betrag": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "offen",
+        "bezahlt",
+        "ueberfaellig",
+        "storniert"
+      ],
+      "default": "offen"
+    },
+    "automatisch": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": []
+}

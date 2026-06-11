@@ -1,0 +1,43 @@
+{
+  "name": "Kunde",
+  "type": "object",
+  "properties": {
+    "firma": {
+      "type": "string",
+      "description": "Firmenname"
+    },
+    "vorname": {
+      "type": "string"
+    },
+    "nachname": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "telefon": {
+      "type": "string"
+    },
+    "adresse": {
+      "type": "string"
+    },
+    "plz": {
+      "type": "string"
+    },
+    "ort": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aktiv",
+        "inaktiv"
+      ],
+      "default": "aktiv"
+    },
+    "notizen": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

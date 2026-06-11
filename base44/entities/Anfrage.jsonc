@@ -1,0 +1,51 @@
+{
+  "name": "Anfrage",
+  "type": "object",
+  "properties": {
+    "betreff": {
+      "type": "string"
+    },
+    "beschreibung": {
+      "type": "string"
+    },
+    "kunde_id": {
+      "type": "string"
+    },
+    "kunde_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "neu",
+        "in_bearbeitung",
+        "offeriert",
+        "gewonnen",
+        "verloren"
+      ],
+      "default": "neu"
+    },
+    "herkunft": {
+      "type": "string",
+      "enum": [
+        "website",
+        "telefon",
+        "empfehlung",
+        "google",
+        "social_media",
+        "sonstige"
+      ],
+      "default": "website"
+    },
+    "nachfassung_datum": {
+      "type": "string",
+      "format": "date"
+    },
+    "notizen": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "betreff"
+  ]
+}

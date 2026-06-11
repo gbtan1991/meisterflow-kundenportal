@@ -1,0 +1,34 @@
+{
+  "name": "Automatisierung",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "typ": {
+      "type": "string",
+      "enum": [
+        "email",
+        "sms",
+        "whatsapp",
+        "bewertung",
+        "termin"
+      ],
+      "default": "email"
+    },
+    "ausloeser": {
+      "type": "string",
+      "description": "Wann die Automatisierung ausgel\u00f6st wird"
+    },
+    "beschreibung": {
+      "type": "string"
+    },
+    "aktiv": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

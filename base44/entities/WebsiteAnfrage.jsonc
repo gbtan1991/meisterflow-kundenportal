@@ -1,0 +1,53 @@
+{
+  "name": "WebsiteAnfrage",
+  "type": "object",
+  "properties": {
+    "titel": {
+      "type": "string"
+    },
+    "beschreibung": {
+      "type": "string"
+    },
+    "typ": {
+      "type": "string",
+      "enum": [
+        "anpassung",
+        "neues_element",
+        "fehler",
+        "sonstiges"
+      ],
+      "default": "anpassung"
+    },
+    "prioritaet": {
+      "type": "string",
+      "enum": [
+        "niedrig",
+        "mittel",
+        "hoch"
+      ],
+      "default": "mittel"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "offen",
+        "in_bearbeitung",
+        "erledigt",
+        "abgelehnt"
+      ],
+      "default": "offen"
+    },
+    "screenshot_url": {
+      "type": "string"
+    },
+    "firma_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "titel"
+  ]
+}

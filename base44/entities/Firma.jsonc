@@ -1,0 +1,130 @@
+{
+  "name": "Firma",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Verkn\u00fcpfung mit dem Benutzer"
+    },
+    "firmenname": {
+      "type": "string"
+    },
+    "ansprechpartner": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "telefon": {
+      "type": "string"
+    },
+    "adresse": {
+      "type": "string"
+    },
+    "plz": {
+      "type": "string"
+    },
+    "ort": {
+      "type": "string"
+    },
+    "uid_nummer": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "rechnungsadresse": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "hosting_zugang": {
+      "type": "string"
+    },
+    "hat_website": {
+      "type": "boolean",
+      "default": false
+    },
+    "hat_google_analytics": {
+      "type": "boolean",
+      "default": false
+    },
+    "hat_search_console": {
+      "type": "boolean",
+      "default": false
+    },
+    "kalender_verbunden": {
+      "type": "string",
+      "enum": [
+        "",
+        "google",
+        "outlook",
+        "microsoft365",
+        "apple"
+      ],
+      "default": ""
+    },
+    "google_verbunden": {
+      "type": "boolean",
+      "default": false
+    },
+    "whatsapp_verbunden": {
+      "type": "boolean",
+      "default": false
+    },
+    "whatsapp_nummer": {
+      "type": "string"
+    },
+    "sms_verbunden": {
+      "type": "boolean",
+      "default": false
+    },
+    "sms_eigene_nummer": {
+      "type": "string"
+    },
+    "sms_meisterflow_nummer": {
+      "type": "boolean",
+      "default": false
+    },
+    "email_verbunden": {
+      "type": "string",
+      "enum": [
+        "",
+        "microsoft365",
+        "outlook",
+        "gmail",
+        "imap_smtp"
+      ],
+      "default": ""
+    },
+    "email_verbunden_adresse": {
+      "type": "string"
+    },
+    "branche": {
+      "type": "string"
+    },
+    "dienstleistungen": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "google_bewertungslink": {
+      "type": "string"
+    },
+    "stripe_zahlungslink": {
+      "type": "string",
+      "description": "Stripe Zahlungslink (https://buy.stripe.com/...)"
+    },
+    "onboarding_abgeschlossen": {
+      "type": "boolean",
+      "default": false
+    },
+    "onboarding_schritt": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": []
+}

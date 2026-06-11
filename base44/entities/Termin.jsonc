@@ -1,0 +1,54 @@
+{
+  "name": "Termin",
+  "type": "object",
+  "properties": {
+    "titel": {
+      "type": "string"
+    },
+    "kunde_id": {
+      "type": "string"
+    },
+    "kunde_name": {
+      "type": "string"
+    },
+    "datum": {
+      "type": "string",
+      "format": "date"
+    },
+    "uhrzeit": {
+      "type": "string"
+    },
+    "dauer_minuten": {
+      "type": "number",
+      "default": 60
+    },
+    "ort": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "geplant",
+        "bestaetigt",
+        "abgeschlossen",
+        "abgesagt"
+      ],
+      "default": "geplant"
+    },
+    "erinnerung": {
+      "type": "boolean",
+      "default": true
+    },
+    "notizen": {
+      "type": "string"
+    },
+    "google_event_id": {
+      "type": "string",
+      "description": "Google Calendar Event ID f\u00fcr Sync"
+    }
+  },
+  "required": [
+    "titel",
+    "datum"
+  ]
+}

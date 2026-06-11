@@ -1,0 +1,69 @@
+{
+  "name": "Offerte",
+  "type": "object",
+  "properties": {
+    "nummer": {
+      "type": "string"
+    },
+    "titel": {
+      "type": "string"
+    },
+    "kunde_id": {
+      "type": "string"
+    },
+    "kunde_name": {
+      "type": "string"
+    },
+    "datum": {
+      "type": "string",
+      "format": "date"
+    },
+    "betrag_einmalig": {
+      "type": "number",
+      "default": 0
+    },
+    "betrag_monatlich": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "entwurf",
+        "gesendet",
+        "akzeptiert",
+        "abgelehnt"
+      ],
+      "default": "entwurf"
+    },
+    "gueltig_bis": {
+      "type": "string",
+      "format": "date"
+    },
+    "leistungen": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "projektstatus": {
+      "type": "string",
+      "enum": [
+        "geplant",
+        "in_bearbeitung",
+        "abgeschlossen"
+      ],
+      "default": "geplant"
+    },
+    "notiz": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "titel",
+    "kunde_id",
+    "datum",
+    "betrag_einmalig",
+    "leistungen"
+  ]
+}
