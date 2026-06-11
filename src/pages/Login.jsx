@@ -17,22 +17,25 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+  };
+
+  const handleGoogle = async () => {
+    if (!email) {
+      toast.error("Please enter your email address first");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
       await signInWithMagicLink(email);
       setMagicLinkSent(true);
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(err.message || "Failed to send magic link");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogle = () => {
-    toast("Google login coming soon");
   };
 
   return (
