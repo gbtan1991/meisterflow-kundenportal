@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +9,10 @@ import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
-import { toast } from "@/components/ui/use-toast";
+import toast from "react-hot-toast";
 
 export default function Register() {
+  const { signInWithMagicLink } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,7 +30,8 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await base44.auth.register({ email, password });
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
       setShowOtp(true);
     } catch (err) {
       setError(err.message || "Registration failed");
@@ -41,10 +44,12 @@ export default function Register() {
     setError("");
     setLoading(true);
     try {
-      const result = await base44.auth.verifyOtp({ email, otpCode });
-      if (result?.access_token) {
-        base44.auth.setToken(result.access_token);
-      }
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: otpCode,
+        type: "signup",
+      });
+      if (error) throw error;
       window.location.href = "/";
     } catch (err) {
       setError(err.message || "Invalid verification code");
@@ -56,18 +61,29 @@ export default function Register() {
   const handleResend = async () => {
     setError("");
     try {
-      await base44.auth.resendOtp(email);
-      toast({
-        title: "Code sent",
-        description: "Check your email for the new code.",
-      });
+      const { error } = await supabase.auth.resend({ type: "signup", email });
+      if (error) throw error;
+      toast("Code sent — check your email for the new code.");
     } catch (err) {
       setError(err.message || "Failed to resend code");
     }
   };
 
-  const handleGoogle = () => {
-    base44.auth.loginWithProvider("google", "/");
+  const handleGoogle = async () => {
+    if (!email) {
+      toast.error("Please enter your email first");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      await signInWithMagicLink(email);
+      setShowOtp(true);
+    } catch (err) {
+      setError(err.message || "Failed to send magic link");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (showOtp) {
