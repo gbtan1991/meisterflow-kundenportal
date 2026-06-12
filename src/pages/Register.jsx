@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +11,6 @@ import GoogleIcon from "@/components/GoogleIcon";
 import toast from "react-hot-toast";
 
 export default function Register() {
-  const { signInWithMagicLink } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -70,20 +68,13 @@ export default function Register() {
   };
 
   const handleGoogle = async () => {
-    if (!email) {
-      toast.error("Please enter your email first");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    try {
-      await signInWithMagicLink(email);
-      setShowOtp(true);
-    } catch (err) {
-      setError(err.message || "Failed to send magic link");
-    } finally {
-      setLoading(false);
-    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/'
+      }
+    })
+    if (error) setError(error.message)
   };
 
   if (showOtp) {
