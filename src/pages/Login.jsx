@@ -34,20 +34,13 @@ export default function Login() {
   };
 
   const handleGoogle = async () => {
-    if (!email) {
-      toast.error("Please enter your email address first");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    try {
-      await signInWithMagicLink(email);
-      setMagicLinkSent(true);
-    } catch (err) {
-      setError(err.message || "Failed to send magic link");
-    } finally {
-      setLoading(false);
-    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/'
+      }
+    })
+    if (error) setError(error.message)
   };
 
   return (
