@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import FormDialog from "./FormDialog";
@@ -24,14 +24,21 @@ export default function RechnungDialog({ open, onOpenChange }) {
 
   const { data: rechnungen = [] } = useQuery({
     queryKey: ["rechnungen"],
-    queryFn: () => base44.entities.Rechnung.list("-created_date", 500),
+    queryFn: () =>
+      supabase
+        .from('invoices')
+        .select('id')
+        .then(({ data }) => data ?? []),
   });
 
   const create = useMutation({
-    mutationFn: (f) => {
+    mutationFn: async (f) => {
       const jahr = new Date().getFullYear();
       const nummer = `RE-${jahr}-${String(rechnungen.length + 1).padStart(4, "0")}`;
-      return base44.entities.Rechnung.create({ ...f, nummer });
+      const { error } = await supabase
+        .from('invoices')
+        .insert({ ...f, nummer });
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["rechnungen"] });

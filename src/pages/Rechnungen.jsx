@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,25 +36,42 @@ export default function Rechnungen() {
 
   const { data: rechnungen = [] } = useQuery({
     queryKey: ["rechnungen"],
-    queryFn: () => base44.entities.Rechnung.list("-created_date", 500),
+    queryFn: () =>
+      supabase
+        .from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500)
+        .then(({ data }) => data ?? []),
   });
 
   const { data: firma } = useQuery({
     queryKey: ["firma"],
     queryFn: async () => {
-      const user = await base44.auth.me();
-      if (!user) return null;
-      const firmen = await base44.entities.Firma.filter({ user_id: user.id });
-      return firmen[0];
+      const { data } = await supabase
+        .from('company_profiles')
+        .select('*')
+        .limit(1);
+      return data?.[0] ?? null;
     },
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Rechnung.update(id, data),
+    mutationFn: ({ id, data }) =>
+      supabase
+        .from('invoices')
+        .update(data)
+        .eq('id', id)
+        .then(({ error }) => { if (error) throw error; }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["rechnungen"] }),
   });
   const remove = useMutation({
-    mutationFn: (id) => base44.entities.Rechnung.delete(id),
+    mutationFn: (id) =>
+      supabase
+        .from('invoices')
+        .delete()
+        .eq('id', id)
+        .then(({ error }) => { if (error) throw error; }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["rechnungen"] }),
   });
 

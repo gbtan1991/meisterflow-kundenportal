@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { generateProfessionalRechnung } from "@/lib/generateProfessionalRechnung";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,25 +50,36 @@ export default function RechnungErstellen() {
   const { data: firma } = useQuery({
     queryKey: ["firma"],
     queryFn: async () => {
-      const user = await base44.auth.me();
-      if (!user) return null;
-      const firmen = await base44.entities.Firma.filter({ user_id: user.id });
-      return firmen[0];
+      const { data } = await supabase
+        .from('company_profiles')
+        .select('*')
+        .limit(1);
+      return data?.[0] ?? null;
     },
   });
 
   // Kundenliste
   const { data: kunden } = useQuery({
     queryKey: ["kunden"],
-    queryFn: () => base44.entities.Kunde.list("-created_date", 100),
+    queryFn: () =>
+      supabase
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100)
+        .then(({ data }) => data ?? []),
   });
 
   // Nächste Rechnungsnummer
   useEffect(() => {
     const generateNummer = async () => {
       try {
-        const rechnungen = await base44.entities.Rechnung.list("-created_date", 1);
-        const lastNum = rechnungen.length > 0 ? rechnungen[0].nummer : "MF-RE-2026-0000";
+        const { data: rechnungen } = await supabase
+          .from('invoices')
+          .select('nummer')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        const lastNum = rechnungen?.[0]?.nummer || "MF-RE-2026-0000";
         const parts = lastNum.split("-");
         const num = parseInt(parts[3]) + 1;
         setNummer(`MF-RE-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`);
@@ -121,7 +132,15 @@ export default function RechnungErstellen() {
   const total = zwischensumme + mwst;
 
   const createRechnung = useMutation({
-    mutationFn: (data) => base44.entities.Rechnung.create(data),
+    mutationFn: async (data) => {
+      const { data: created, error } = await supabase
+        .from('invoices')
+        .insert({ ...data, amount: data.betrag })
+        .select()
+        .single();
+      if (error) throw error;
+      return created;
+    },
     onSuccess: (createdRechnung) => {
       qc.invalidateQueries({ queryKey: ["rechnungen"] });
       toast({ title: "Rechnung erstellt", description: "Die Rechnung wurde erfolgreich erstellt." });
