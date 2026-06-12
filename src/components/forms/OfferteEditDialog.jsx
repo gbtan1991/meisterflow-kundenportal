@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import FormDialog from "./FormDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,8 @@ export default function OfferteEditDialog({ offerte, open, onOpenChange }) {
 
   const { data: firma } = useQuery({
     queryKey: ["firma"],
-    queryFn: () => base44.entities.Firma.list("-created_date", 1),
+    queryFn: () =>
+      supabase.from('company_profiles').select('*').limit(1).then(({ data }) => data ?? []),
   });
 
   const generateOffertePDF = (off) => {
@@ -61,7 +62,10 @@ export default function OfferteEditDialog({ offerte, open, onOpenChange }) {
   };
 
   const update = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Offerte.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const { error } = await supabase.from('quotes').update(data).eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["offerten"] });
       onOpenChange(false);

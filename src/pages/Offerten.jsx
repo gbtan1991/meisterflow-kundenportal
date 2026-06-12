@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +44,8 @@ export default function Offerten() {
 
   const { data: firma } = useQuery({
     queryKey: ["firma"],
-    queryFn: () => base44.entities.Firma.list("-created_date", 1),
+    queryFn: () =>
+      supabase.from('company_profiles').select('*').limit(1).then(({ data }) => data ?? []),
   });
 
   const generateOffertePDF = (offerte) => {
@@ -60,33 +61,41 @@ export default function Offerten() {
 
   const { data: offerten = [] } = useQuery({
     queryKey: ["offerten"],
-    queryFn: () => base44.entities.Offerte.list("-created_date", 500),
+    queryFn: () =>
+      supabase
+        .from('quotes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500)
+        .then(({ data }) => data ?? []),
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Offerte.update(id, data),
+    mutationFn: ({ id, data }) =>
+      supabase.from('quotes').update(data).eq('id', id).then(({ error }) => { if (error) throw error; }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["offerten"] }),
   });
   const remove = useMutation({
-    mutationFn: (id) => base44.entities.Offerte.delete(id),
+    mutationFn: (id) =>
+      supabase.from('quotes').delete().eq('id', id).then(({ error }) => { if (error) throw error; }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["offerten"] }),
   });
   const umwandeln = useMutation({
     mutationFn: async (o) => {
-      const rechnungen = await base44.entities.Rechnung.list("-created_date", 500);
+      const { data: rechnungen } = await supabase.from('invoices').select('id');
       const jahr = new Date().getFullYear();
-      const nummer = `RE-${jahr}-${String(rechnungen.length + 1).padStart(4, "0")}`;
-      return base44.entities.Rechnung.create({
+      const nummer = `RE-${jahr}-${String((rechnungen?.length || 0) + 1).padStart(4, "0")}`;
+      const { error } = await supabase.from('invoices').insert({
         nummer,
         titel: o.titel,
-        kunde_id: o.kunde_id,
+        customer_id: o.kunde_id,
         kunde_name: o.kunde_name,
         datum: format(new Date(), "yyyy-MM-dd"),
         faellig_am: format(addDays(new Date(), 30), "yyyy-MM-dd"),
-        betrag: (o.betrag_einmalig || 0) + (o.betrag_monatlich || 0),
+        amount: (o.betrag_einmalig || 0) + (o.betrag_monatlich || 0),
         status: "offen",
-        automatisch: true,
       });
+      if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["rechnungen"] }),
   });

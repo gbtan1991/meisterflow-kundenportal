@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,15 +51,25 @@ export default function OfferteErstellen() {
   // Kundenliste
   const { data: kunden } = useQuery({
     queryKey: ["kunden"],
-    queryFn: () => base44.entities.Kunde.list("-created_date", 100),
+    queryFn: () =>
+      supabase
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100)
+        .then(({ data }) => data ?? []),
   });
 
   // Nächste Offertennummer generieren
   useEffect(() => {
     const generateNummer = async () => {
       try {
-        const offerten = await base44.entities.Offerte.list("-created_date", 1);
-        const lastNum = offerten.length > 0 ? offerten[0].nummer : "MF-2026-0000";
+        const { data: offerten } = await supabase
+          .from('quotes')
+          .select('nummer')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        const lastNum = offerten?.[0]?.nummer || "MF-2026-0000";
         const parts = lastNum.split("-");
         const num = parseInt(parts[2]) + 1;
         setNummer(`MF-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`);
@@ -95,7 +105,11 @@ export default function OfferteErstellen() {
   };
 
   const createOfferte = useMutation({
-    mutationFn: (data) => base44.entities.Offerte.create(data),
+    mutationFn: async (data) => {
+      const { data: created, error } = await supabase.from('quotes').insert(data).select().single();
+      if (error) throw error;
+      return created;
+    },
     onSuccess: (created) => {
       qc.invalidateQueries({ queryKey: ["offerten"] });
       toast({ title: "Offerte erstellt", description: "Die Offerte wurde erfolgreich erstellt." });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import FormDialog from "./FormDialog";
@@ -19,7 +19,8 @@ export default function OfferteDialog({ open, onOpenChange, prefill = {} }) {
 
   const { data: offerten = [] } = useQuery({
     queryKey: ["offerten"],
-    queryFn: () => base44.entities.Offerte.list("-created_date", 500),
+    queryFn: () =>
+      supabase.from('quotes').select('id').then(({ data }) => data ?? []),
   });
 
   useEffect(() => {
@@ -38,15 +39,16 @@ export default function OfferteDialog({ open, onOpenChange, prefill = {} }) {
   };
 
   const create = useMutation({
-    mutationFn: (f) => {
+    mutationFn: async (f) => {
       const jahr = new Date().getFullYear();
       const nummer = `MF-${jahr}-${String(offerten.length + 1).padStart(4, "0")}`;
       const { leistungenText, ...rest } = f;
-      return base44.entities.Offerte.create({
+      const { error } = await supabase.from('quotes').insert({
         ...rest,
         nummer,
         leistungen: leistungenText.split(",").map((s) => s.trim()).filter(Boolean),
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["offerten"] });
