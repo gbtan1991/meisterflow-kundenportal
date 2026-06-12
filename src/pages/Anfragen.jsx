@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,15 +44,23 @@ export default function Anfragen() {
 
   const { data: anfragen = [] } = useQuery({
     queryKey: ["anfragen"],
-    queryFn: () => base44.entities.Anfrage.list("-created_date", 500),
+    queryFn: () =>
+      supabase
+        .from('requests')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500)
+        .then(({ data }) => data ?? []),
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Anfrage.update(id, data),
+    mutationFn: ({ id, data }) =>
+      supabase.from('requests').update(data).eq('id', id).then(({ error }) => { if (error) throw error; }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["anfragen"] }),
   });
   const remove = useMutation({
-    mutationFn: (id) => base44.entities.Anfrage.delete(id),
+    mutationFn: (id) =>
+      supabase.from('requests').delete().eq('id', id).then(({ error }) => { if (error) throw error; }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["anfragen"] }),
   });
 
@@ -103,7 +111,7 @@ export default function Anfragen() {
                 )}
                 <div className="flex flex-wrap items-center gap-4 text-xs pt-0.5">
                   <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5" /> Eingegangen am {formatDatum(a.created_date)}
+                    <Clock className="w-3.5 h-3.5" /> Eingegangen am {formatDatum(a.created_at)}
                   </span>
                   {a.nachfassung_datum && (
                     <span className={`flex items-center gap-1.5 font-medium ${istUeberfaellig(a.nachfassung_datum) ? "text-red-600" : "text-primary"}`}>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,10 @@ export default function AnfrageDialog({ open, onOpenChange }) {
   const qc = useQueryClient();
 
   const create = useMutation({
-    mutationFn: (d) => base44.entities.Anfrage.create(d),
+    mutationFn: async (d) => {
+      const { error } = await supabase.from('requests').insert(d);
+      if (error) throw error;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["anfragen"] });
       setForm(LEER);

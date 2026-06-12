@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import {
   Select,
   SelectContent,
@@ -13,7 +13,13 @@ import { kundeName } from "@/lib/format";
 export default function KundeSelect({ value, onChange }) {
   const { data: kunden = [] } = useQuery({
     queryKey: ["kunden"],
-    queryFn: () => base44.entities.Kunde.list("-created_date", 200),
+    queryFn: () =>
+      supabase
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200)
+        .then(({ data }) => data ?? []),
   });
 
   return (
