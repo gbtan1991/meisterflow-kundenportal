@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,13 @@ export default function Kunden() {
 
   const { data: kunden = [], isLoading } = useQuery({
     queryKey: ["kunden"],
-    queryFn: () => base44.entities.Kunde.list("-created_date", 500),
+    queryFn: () =>
+      supabase
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500)
+        .then(({ data }) => data ?? []),
   });
 
   const filtered = kunden.filter((k) =>
@@ -51,7 +57,9 @@ export default function Kunden() {
       };
     }).filter((r) => r.vorname || r.nachname || r.firma);
 
-    await base44.entities.Kunde.bulkCreate(records);
+    const { data: { user } } = await supabase.auth.getUser();
+    const recordsWithUser = records.map(r => ({ ...r, user_id: user.id }));
+    await supabase.from('customers').insert(recordsWithUser);
     qc.invalidateQueries({ queryKey: ["kunden"] });
     setImporting(false);
     e.target.value = "";

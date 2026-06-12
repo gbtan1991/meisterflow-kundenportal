@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import StatusBadge from "@/components/StatusBadge";
 import { kundeName, formatDatum, formatCHF } from "@/lib/format";
@@ -64,27 +64,55 @@ export default function KundenDetail() {
 
   const { data: kunden = [] } = useQuery({
     queryKey: ["kunde", id],
-    queryFn: () => base44.entities.Kunde.filter({ id }),
+    queryFn: () =>
+      supabase
+        .from('customers')
+        .select('*')
+        .eq('id', id)
+        .then(({ data }) => data ?? []),
   });
   const kunde = kunden[0];
 
-  const useFiltered = (key, entity) =>
-    useQuery({
-      queryKey: [key, id],
-      queryFn: () => base44.entities[entity].filter({ kunde_id: id }, "-created_date", 50),
-      initialData: [],
-    });
-
-  const { data: anfragen } = useFiltered("kunde-anfragen", "Anfrage");
-  const { data: termine } = useFiltered("kunde-termine", "Termin");
-  const { data: offerten } = useFiltered("kunde-offerten", "Offerte");
-  const { data: rechnungen } = useFiltered("kunde-rechnungen", "Rechnung");
-  const { data: bewertungen } = useFiltered("kunde-bewertungen", "Bewertung");
+  const { data: anfragen = [] } = useQuery({
+    queryKey: ["kunde-anfragen", id],
+    queryFn: () =>
+      supabase.from('requests').select('*').eq('customer_id', id)
+        .order('created_at', { ascending: false }).limit(50).then(({ data }) => data ?? []),
+    initialData: [],
+  });
+  const { data: termine = [] } = useQuery({
+    queryKey: ["kunde-termine", id],
+    queryFn: () =>
+      supabase.from('appointments').select('*').eq('customer_id', id)
+        .order('created_at', { ascending: false }).limit(50).then(({ data }) => data ?? []),
+    initialData: [],
+  });
+  const { data: offerten = [] } = useQuery({
+    queryKey: ["kunde-offerten", id],
+    queryFn: () =>
+      supabase.from('quotes').select('*').eq('customer_id', id)
+        .order('created_at', { ascending: false }).limit(50).then(({ data }) => data ?? []),
+    initialData: [],
+  });
+  const { data: rechnungen = [] } = useQuery({
+    queryKey: ["kunde-rechnungen", id],
+    queryFn: () =>
+      supabase.from('invoices').select('*').eq('customer_id', id)
+        .order('created_at', { ascending: false }).limit(50).then(({ data }) => data ?? []),
+    initialData: [],
+  });
+  const { data: bewertungen = [] } = useQuery({
+    queryKey: ["kunde-bewertungen", id],
+    queryFn: () =>
+      supabase.from('reviews').select('*').eq('customer_id', id)
+        .order('created_at', { ascending: false }).limit(50).then(({ data }) => data ?? []),
+    initialData: [],
+  });
 
   // Umsatz = Summe aller bezahlten Rechnungen + akzeptierte Offerten (einmalig)
   const umsatz = rechnungen
     .filter((r) => r.status === "bezahlt")
-    .reduce((sum, r) => sum + (r.betrag || 0), 0);
+    .reduce((sum, r) => sum + (r.amount || 0), 0);
 
   if (!kunde) {
     return <div className="text-sm text-muted-foreground">Kunde wird geladen…</div>;
@@ -111,7 +139,7 @@ export default function KundenDetail() {
             <StatusBadge status={kunde.status} />
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Kunde seit {formatDatum(kunde.created_date)}
+            Kunde seit {formatDatum(kunde.created_at)}
           </p>
         </div>
       </div>
@@ -179,35 +207,35 @@ export default function KundenDetail() {
             icon={Inbox}
             leerText="Keine Anfragen vorhanden."
             onKlick={(item) => setDialog({ typ: "anfrage", item })}
-            eintraege={anfragen.map((a) => ({ id: a.id, raw: a, text: a.betreff, sub: formatDatum(a.created_date), status: a.status }))}
+            eintraege={anfragen.map((a) => ({ id: a.id, raw: a, text: a.title, sub: formatDatum(a.created_at), status: a.status }))}
           />
           <HistorieSektion
             titel="Termine"
             icon={CalendarDays}
             leerText="Keine Termine vorhanden."
             onKlick={(item) => setDialog({ typ: "termin", item })}
-            eintraege={termine.map((t) => ({ id: t.id, raw: t, text: t.titel, sub: `${formatDatum(t.datum)} · ${t.uhrzeit || ""}`, status: t.status }))}
+            eintraege={termine.map((t) => ({ id: t.id, raw: t, text: t.title, sub: `${formatDatum(t.appointment_date)} · ${t.uhrzeit || ""}`, status: t.status }))}
           />
           <HistorieSektion
             titel="Offerten"
             icon={FileText}
             leerText="Keine Offerten vorhanden."
             onKlick={(item) => setDialog({ typ: "offerte", item })}
-            eintraege={offerten.map((o) => ({ id: o.id, raw: o, text: `${o.nummer} – ${o.titel || ""}`, sub: `${formatDatum(o.datum)} · ${formatCHF(o.betrag_einmalig)} + ${formatCHF(o.betrag_monatlich)}/Mt.`, status: o.status }))}
+            eintraege={offerten.map((o) => ({ id: o.id, raw: o, text: `${o.quote_number} – ${o.titel || ""}`, sub: `${formatDatum(o.created_at)} · ${formatCHF(o.amount)}`, status: o.status }))}
           />
           <HistorieSektion
             titel="Rechnungen"
             icon={Receipt}
             leerText="Keine Rechnungen vorhanden."
             onKlick={(item) => setDialog({ typ: "rechnung", item })}
-            eintraege={rechnungen.map((r) => ({ id: r.id, raw: r, text: `${r.nummer} – ${r.titel || ""}`, sub: `${formatDatum(r.datum)} · ${formatCHF(r.betrag)}`, status: r.status }))}
+            eintraege={rechnungen.map((r) => ({ id: r.id, raw: r, text: `${r.invoice_number} – ${r.titel || ""}`, sub: `${formatDatum(r.created_at)} · ${formatCHF(r.amount)}`, status: r.status }))}
           />
           <HistorieSektion
             titel="Bewertungen"
             icon={Star}
             leerText="Keine Bewertungen vorhanden."
             onKlick={(item) => setDialog({ typ: "bewertung", item })}
-            eintraege={bewertungen.map((b) => ({ id: b.id, raw: b, text: b.sterne ? `${"★".repeat(b.sterne)}${"☆".repeat(5 - b.sterne)}` : "Bewertung angefragt", sub: b.kommentar, status: b.status }))}
+            eintraege={bewertungen.map((b) => ({ id: b.id, raw: b, text: b.rating ? `${"★".repeat(b.rating)}${"☆".repeat(5 - b.rating)}` : "Bewertung angefragt", sub: b.review_text, status: b.status }))}
           />
         </div>
       </div>
