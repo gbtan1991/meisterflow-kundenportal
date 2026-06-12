@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
@@ -9,20 +9,63 @@ import { Inbox, CalendarDays, FileText, Receipt, Star, ArrowUpRight, Activity } 
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 
-const useList = (key, entity) =>
-  useQuery({
-    queryKey: [key],
-    queryFn: () => base44.entities[entity].list("-created_date", 200),
+export default function Uebersicht() {
+  const navigate = useNavigate();
+
+  const { data: anfragen = [] } = useQuery({
+    queryKey: ["anfragen"],
+    queryFn: () =>
+      supabase.from('requests')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200)
+        .then(({ data }) => data ?? []),
     initialData: [],
   });
 
-export default function Uebersicht() {
-  const navigate = useNavigate();
-  const { data: anfragen } = useList("anfragen", "Anfrage");
-  const { data: termine } = useList("termine", "Termin");
-  const { data: offerten } = useList("offerten", "Offerte");
-  const { data: rechnungen } = useList("rechnungen", "Rechnung");
-  const { data: bewertungen } = useList("bewertungen", "Bewertung");
+  const { data: termine = [] } = useQuery({
+    queryKey: ["termine"],
+    queryFn: () =>
+      supabase.from('appointments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200)
+        .then(({ data }) => data ?? []),
+    initialData: [],
+  });
+
+  const { data: offerten = [] } = useQuery({
+    queryKey: ["offerten"],
+    queryFn: () =>
+      supabase.from('quotes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200)
+        .then(({ data }) => data ?? []),
+    initialData: [],
+  });
+
+  const { data: rechnungen = [] } = useQuery({
+    queryKey: ["rechnungen"],
+    queryFn: () =>
+      supabase.from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200)
+        .then(({ data }) => data ?? []),
+    initialData: [],
+  });
+
+  const { data: bewertungen = [] } = useQuery({
+    queryKey: ["bewertungen"],
+    queryFn: () =>
+      supabase.from('reviews')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200)
+        .then(({ data }) => data ?? []),
+    initialData: [],
+  });
 
   const handleActivityClick = (id, art) => {
     const [type, actualId] = [id[0], id.substring(1)];
