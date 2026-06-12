@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,22 +17,16 @@ export default function TerminDialog({ open, onOpenChange }) {
   const { toast } = useToast();
 
   const syncToGoogleCalendar = async (termin) => {
-    try {
-      const res = await base44.functions.invoke("syncTerminToGoogleCalendar", {
-        action: "create",
-        termin,
-      });
-      if (res.data?.eventId) {
-        await base44.entities.Termin.update(termin.id, { google_event_id: res.data.eventId });
-        qc.invalidateQueries({ queryKey: ["termine"] });
-      }
-    } catch {
-      // Silently ignore — Google Calendar not connected
-    }
+    // Google Calendar sync will be implemented via Supabase Edge Function in next phase
+    console.log('Calendar sync pending:', termin.id);
   };
 
   const create = useMutation({
-    mutationFn: (d) => base44.entities.Termin.create(d),
+    mutationFn: async (d) => {
+      const { data, error } = await supabase.from('appointments').insert(d).select().single();
+      if (error) throw error;
+      return data;
+    },
     onSuccess: async (newTermin) => {
       qc.invalidateQueries({ queryKey: ["termine"] });
       setForm(LEER);

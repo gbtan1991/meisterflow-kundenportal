@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,10 @@ export default function TerminEditDialog({ termin, open, onOpenChange }) {
   }, [termin]);
 
   const update = useMutation({
-    mutationFn: (d) => base44.entities.Termin.update(termin.id, d),
+    mutationFn: async (d) => {
+      const { error } = await supabase.from('appointments').update(d).eq('id', termin.id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["termine"] });
       onOpenChange(false);

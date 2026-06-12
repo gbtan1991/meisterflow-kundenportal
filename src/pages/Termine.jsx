@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
+import toast from 'react-hot-toast';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,15 +66,23 @@ export default function Termine() {
 
   const { data: termine = [] } = useQuery({
     queryKey: ["termine"],
-    queryFn: () => base44.entities.Termin.list("-created_date", 500),
+    queryFn: () =>
+      supabase
+        .from('appointments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500)
+        .then(({ data }) => data ?? []),
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Termin.update(id, data),
+    mutationFn: ({ id, data }) =>
+      supabase.from('appointments').update(data).eq('id', id).then(({ error }) => { if (error) throw error; }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["termine"] }),
   });
   const remove = useMutation({
-    mutationFn: (id) => base44.entities.Termin.delete(id),
+    mutationFn: (id) =>
+      supabase.from('appointments').delete().eq('id', id).then(({ error }) => { if (error) throw error; }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["termine"] }),
   });
 
@@ -113,10 +122,10 @@ export default function Termine() {
   return (
     <div>
       <PageHeader title="Termine">
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => base44.connectors.connectAppUser("6a2a68df83a79531c222b4a6").then(url => window.open(url, "_blank"))}>
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => toast("Google Calendar integration coming soon")}>
           <GCalIcon /> Google Kalender
         </Button>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => base44.connectors.connectAppUser("6a2a5b27725e857800ca8e5d").then(url => window.open(url, "_blank"))}>
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => toast("Outlook integration coming soon")}>
           <OutlookIcon /> Outlook
         </Button>
         <Button onClick={() => setDialogOpen(true)}>
