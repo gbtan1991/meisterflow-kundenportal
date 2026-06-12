@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,11 +38,19 @@ export default function FirmaEinstellungen() {
 
   const { data: user } = useQuery({
     queryKey: ["me"],
-    queryFn: () => base44.auth.me(),
+    queryFn: () =>
+      supabase.auth.getUser()
+        .then(({ data: { user } }) => user),
   });
   const { data: firmen = [] } = useQuery({
     queryKey: ["firma", user?.id],
-    queryFn: () => base44.entities.Firma.filter({ user_id: user?.id }),
+    queryFn: () =>
+      supabase
+        .from('company_profiles')
+        .select('*')
+        .eq('user_id', user?.id)
+        .limit(1)
+        .then(({ data }) => data ?? []),
     enabled: !!user?.id,
   });
   const firma = firmen[0];
@@ -64,14 +72,35 @@ export default function FirmaEinstellungen() {
   };
 
   const speichern = async () => {
-    if (!firma?.id || !form) return;
+    if (!form) return;
     setSaving(true);
     let logo_url = form.logo_url || "";
     if (logoFile) {
-      const result = await base44.integrations.Core.UploadFile({ file: logoFile });
-      logo_url = result.file_url;
+      const fileExt = logoFile.name.split('.').pop();
+      const fileName = `logo-${user?.id}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('company-logos')
+        .upload(fileName, logoFile, { upsert: true });
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from('company-logos')
+          .getPublicUrl(fileName);
+        logo_url = urlData.publicUrl;
+      }
     }
-    await base44.entities.Firma.update(firma.id, { ...form, logo_url });
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (firma?.id) {
+      const { error } = await supabase
+        .from('company_profiles')
+        .update({ ...form, logo_url })
+        .eq('id', firma.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('company_profiles')
+        .insert({ ...form, logo_url, user_id: currentUser.id });
+      if (error) throw error;
+    }
     qc.invalidateQueries({ queryKey: ["firma"] });
     setSaving(false);
     toast({ title: "Gespeichert", description: "Ihre Firmendaten wurden aktualisiert." });

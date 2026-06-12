@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
@@ -19,19 +19,31 @@ export default function Bewertungen() {
 
   const { data: bewertungen = [] } = useQuery({
     queryKey: ["bewertungen"],
-    queryFn: () => base44.entities.Bewertung.list("-created_date", 500),
+    queryFn: () =>
+      supabase
+        .from('reviews')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500)
+        .then(({ data }) => data ?? []),
   });
 
   const { data: firmen = [] } = useQuery({
     queryKey: ["firma"],
-    queryFn: () => base44.entities.Firma.filter({ user_id: user?.id }),
+    queryFn: () =>
+      supabase
+        .from('company_profiles')
+        .select('*')
+        .eq('user_id', user?.id)
+        .limit(1)
+        .then(({ data }) => data ?? []),
     enabled: !!user?.id,
   });
   const firma = firmen[0] || null;
 
-  const erhaltene = bewertungen.filter(b => b.sterne && (b.status === "erhalten" || b.status === "beantwortet"));
+  const erhaltene = bewertungen.filter(b => b.rating && (b.status === "erhalten" || b.status === "beantwortet"));
   const durchschnitt = erhaltene.length
-    ? (erhaltene.reduce((s, b) => s + b.sterne, 0) / erhaltene.length).toFixed(1)
+    ? (erhaltene.reduce((s, b) => s + b.rating, 0) / erhaltene.length).toFixed(1)
     : "–";
 
   return (

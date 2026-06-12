@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,7 +21,16 @@ export default function BewertungDialog({ open, onOpenChange }) {
   const qc = useQueryClient();
 
   const create = useMutation({
-    mutationFn: (d) => base44.entities.Bewertung.create({ ...d, sterne: d.sterne || undefined }),
+    mutationFn: async (d) => {
+      const { error } = await supabase
+        .from('reviews')
+        .insert({
+          ...d,
+          rating: d.sterne || null,
+          review_text: d.kommentar || null,
+        });
+      if (error) throw error;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bewertungen"] });
       setForm(LEER);
