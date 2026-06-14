@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/AuthContext";
+import { useBusiness } from "@/context/BusinessContext";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import SchrittCard from "@/components/onboarding/SchrittCard";
 import IntegrationKarte from "@/components/onboarding/IntegrationKarte";
@@ -49,14 +51,24 @@ export default function Onboarding() {
 
   const { data: user } = useQuery({
     queryKey: ["me"],
-    queryFn: () => base44.auth.me(),
+    queryFn: () =>
+      supabase.auth.getUser()
+        .then(({ data: { user } }) => user),
   });
   const { data: firmen = [] } = useQuery({
     queryKey: ["firma", user?.id],
-    queryFn: () => base44.entities.Firma.filter({ user_id: user?.id }),
+    queryFn: () =>
+      supabase
+        .from('company_profiles')
+        .select('*')
+        .eq('user_id', user?.id)
+        .limit(1)
+        .then(({ data }) => data ?? []),
     enabled: !!user?.id,
   });
   const bestehendeFirma = firmen[0];
+
+  const { createBusiness, loadBusinesses } = useBusiness();
 
   useEffect(() => {
     if (bestehendeFirma) {
@@ -78,13 +90,44 @@ export default function Onboarding() {
       onboarding_schritt: neuerSchritt,
       onboarding_abgeschlossen: fertig,
     };
-    if (bestehendeFirma?.id) {
-      await base44.entities.Firma.update(bestehendeFirma.id, data);
-    } else {
-      await base44.entities.Firma.create(data);
+
+    try {
+      if (bestehendeFirma?.id) {
+        // Update existing company profile
+        await supabase
+          .from('company_profiles')
+          .update(data)
+          .eq('id', bestehendeFirma.id);
+      } else {
+        // Create new company profile
+        await supabase
+          .from('company_profiles')
+          .insert(data);
+      }
+
+      // When onboarding completes — create the business record
+      if (fertig) {
+        // Check if business already exists for this user
+        const { data: existing } = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', user?.id)
+          .limit(1);
+
+        if (!existing || existing.length === 0) {
+          // Create business record
+          await createBusiness(form.firmenname || 'Mein Betrieb');
+        } else {
+          await loadBusinesses();
+        }
+      }
+
+      qc.invalidateQueries({ queryKey: ["firma"] });
+    } catch (err) {
+      console.error('Speichern fehlgeschlagen:', err);
+    } finally {
+      setSaving(false);
     }
-    qc.invalidateQueries({ queryKey: ["firma"] });
-    setSaving(false);
     return data;
   };
 
@@ -106,8 +149,16 @@ export default function Onboarding() {
   };
   const uploadLogo = async () => {
     if (!logoFile) return form.logo_url || "";
-    const { file_url } = await base44.integrations.Core.UploadFile({ file: logoFile });
-    return file_url;
+    const fileExt = logoFile.name.split('.').pop();
+    const fileName = `logo-${user?.id}-${Date.now()}.${fileExt}`;
+    const { error } = await supabase.storage
+      .from('company-logos')
+      .upload(fileName, logoFile, { upsert: true });
+    if (error) return form.logo_url || "";
+    const { data: urlData } = supabase.storage
+      .from('company-logos')
+      .getPublicUrl(fileName);
+    return urlData.publicUrl;
   };
 
   const toggleDienstleistung = (dl) => {
