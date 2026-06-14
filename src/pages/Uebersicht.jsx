@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useBusiness } from "@/context/BusinessContext";
 import { Card } from "@/components/ui/card";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
@@ -11,60 +12,71 @@ import { de } from "date-fns/locale";
 
 export default function Uebersicht() {
   const navigate = useNavigate();
+  const { currentBusiness } = useBusiness();
 
   const { data: anfragen = [] } = useQuery({
-    queryKey: ["anfragen"],
+    queryKey: ["anfragen", currentBusiness?.id],
     queryFn: () =>
       supabase.from('requests')
         .select('*')
+        .eq('business_id', currentBusiness?.id)
         .order('created_at', { ascending: false })
         .limit(200)
         .then(({ data }) => data ?? []),
     initialData: [],
+    enabled: !!currentBusiness?.id,
   });
 
   const { data: termine = [] } = useQuery({
-    queryKey: ["termine"],
+    queryKey: ["termine", currentBusiness?.id],
     queryFn: () =>
       supabase.from('appointments')
         .select('*')
+        .eq('business_id', currentBusiness?.id)
         .order('created_at', { ascending: false })
         .limit(200)
         .then(({ data }) => data ?? []),
     initialData: [],
+    enabled: !!currentBusiness?.id,
   });
 
   const { data: offerten = [] } = useQuery({
-    queryKey: ["offerten"],
+    queryKey: ["offerten", currentBusiness?.id],
     queryFn: () =>
       supabase.from('quotes')
         .select('*')
+        .eq('business_id', currentBusiness?.id)
         .order('created_at', { ascending: false })
         .limit(200)
         .then(({ data }) => data ?? []),
     initialData: [],
+    enabled: !!currentBusiness?.id,
   });
 
   const { data: rechnungen = [] } = useQuery({
-    queryKey: ["rechnungen"],
+    queryKey: ["rechnungen", currentBusiness?.id],
     queryFn: () =>
       supabase.from('invoices')
         .select('*')
+        .eq('business_id', currentBusiness?.id)
         .order('created_at', { ascending: false })
         .limit(200)
         .then(({ data }) => data ?? []),
     initialData: [],
+    enabled: !!currentBusiness?.id,
   });
 
   const { data: bewertungen = [] } = useQuery({
-    queryKey: ["bewertungen"],
+    queryKey: ["bewertungen", currentBusiness?.id],
     queryFn: () =>
       supabase.from('reviews')
         .select('*')
+        .eq('business_id', currentBusiness?.id)
         .order('created_at', { ascending: false })
         .limit(200)
         .then(({ data }) => data ?? []),
     initialData: [],
+    enabled: !!currentBusiness?.id,
   });
 
   const handleActivityClick = (id, art) => {
