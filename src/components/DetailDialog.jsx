@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import PDFPreviewModal from "./PDFPreviewModal";
 import { generateProfessionalOfferte } from "@/lib/generateProfessionalOfferte";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
 
 function Zeile({ label, value }) {
@@ -73,7 +73,12 @@ export function OfferteDetailDialog({ offerte, open, onOpenChange }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const { data: firma } = useQuery({
     queryKey: ["firma"],
-    queryFn: () => base44.entities.Firma.list("-created_date", 1),
+    queryFn: () =>
+      supabase
+        .from('company_profiles')
+        .select('*')
+        .limit(1)
+        .then(({ data }) => data ?? []),
   });
 
   const generateOffertePDF = (off) => {
