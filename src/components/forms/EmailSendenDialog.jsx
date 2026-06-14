@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,14 +43,8 @@ export default function EmailSendenDialog({ open, onOpenChange, empfaenger, betr
   // Check connection status when dialog opens
   const checkConnection = async () => {
     setChecking(true);
-    try {
-      const res = await base44.functions.invoke("checkEmailConnection", {});
-      setConnection(res.data);
-      if (res.data.gmail) setSelectedProvider("gmail");
-      else if (res.data.outlook) setSelectedProvider("outlook");
-    } catch {
-      setConnection({ gmail: false, outlook: false });
-    }
+    // Email sending via GHL webhook - coming soon
+    setConnection({ gmail: false, outlook: false });
     setChecking(false);
   };
 
@@ -62,15 +56,7 @@ export default function EmailSendenDialog({ open, onOpenChange, empfaenger, betr
   }, [open, empfaenger, betreff, nachricht]);
 
   const handleConnect = async (provider) => {
-    const connectorId = provider === "gmail" ? GMAIL_CONNECTOR_ID : OUTLOOK_CONNECTOR_ID;
-    const url = await base44.connectors.connectAppUser(connectorId);
-    const popup = window.open(url, "_blank");
-    const timer = setInterval(() => {
-      if (!popup || popup.closed) {
-        clearInterval(timer);
-        checkConnection();
-      }
-    }, 500);
+    console.log('Email connect coming soon');
   };
 
   const handleSend = async () => {
@@ -88,16 +74,7 @@ export default function EmailSendenDialog({ open, onOpenChange, empfaenger, betr
         pdfBase64 = pdfOutput.split(",")[1];
       }
 
-      const fn = selectedProvider === "gmail" ? "sendEmailGmail" : "sendEmailOutlook";
-      await base44.functions.invoke(fn, {
-        to: form.to,
-        subject: form.subject,
-        body: `<p>${form.body.replace(/\n/g, "<br/>")}</p>`,
-        pdfBase64,
-        pdfFilename: pdfFilename || "Dokument.pdf",
-      });
-
-      toast({ title: "E-Mail erfolgreich gesendet ✓" });
+      toast({ title: "E-Mail Versand", description: "E-Mail Integration wird über GHL eingerichtet." });
       onOpenChange(false);
     } catch (err) {
       toast({ title: "Fehler beim Senden", description: err.message, variant: "destructive" });

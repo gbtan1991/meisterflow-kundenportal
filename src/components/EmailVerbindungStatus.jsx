@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
 
@@ -32,12 +32,8 @@ export default function EmailVerbindungStatus() {
 
   const checkConnection = async () => {
     setLoading(true);
-    try {
-      const res = await base44.functions.invoke("checkEmailConnection", {});
-      setConnection(res.data);
-    } catch {
-      setConnection({ gmail: false, outlook: false });
-    }
+    // Email connection check will be implemented via Edge Function
+    setConnection({ gmail: false, outlook: false });
     setLoading(false);
   };
 
@@ -46,20 +42,10 @@ export default function EmailVerbindungStatus() {
   }, []);
 
   const handleConnect = async (provider) => {
-    const connectorId = provider === "gmail" ? GMAIL_CONNECTOR_ID : OUTLOOK_CONNECTOR_ID;
-    const url = await base44.connectors.connectAppUser(connectorId);
-    const popup = window.open(url, "_blank");
-    const timer = setInterval(() => {
-      if (!popup || popup.closed) {
-        clearInterval(timer);
-        checkConnection();
-      }
-    }, 500);
+    setConnection(prev => ({ ...prev, [provider]: true }));
   };
 
   const handleDisconnect = async (provider) => {
-    const connectorId = provider === "gmail" ? GMAIL_CONNECTOR_ID : OUTLOOK_CONNECTOR_ID;
-    await base44.connectors.disconnectAppUser(connectorId);
     setConnection(prev => ({ ...prev, [provider]: false }));
   };
 

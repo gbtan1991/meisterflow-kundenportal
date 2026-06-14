@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Building2, Calendar, Bell, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { formatDatum } from "@/lib/format";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 
 const STATUS_CONFIG = {
   angefragt:           { label: "Angefragt",            color: "bg-slate-100 text-slate-600",    icon: Clock },
@@ -28,7 +28,13 @@ export default function BewertungsanfragenListe({ anfragen }) {
   const qc = useQueryClient();
 
   const update = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Bewertung.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const { error } = await supabase
+        .from('reviews')
+        .update(data)
+        .eq('id', id)
+      if (error) throw error
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["bewertungen"] }),
   });
 

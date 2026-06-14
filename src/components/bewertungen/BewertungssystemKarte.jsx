@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CheckCircle2, XCircle, Bell, Zap, Send, TrendingUp, BarChart2 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { startOfMonth } from "date-fns";
 
@@ -12,7 +12,13 @@ export default function BewertungssystemKarte({ firma, bewertungen = [] }) {
   const systemAktiv = !!firma?.google_verbunden;
 
   const updateFirma = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Firma.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const { error } = await supabase
+        .from('company_profiles')
+        .update(data)
+        .eq('id', id)
+      if (error) throw error
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["firma"] }),
   });
 
