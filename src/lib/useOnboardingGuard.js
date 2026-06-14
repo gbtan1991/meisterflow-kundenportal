@@ -11,7 +11,11 @@ export function useOnboardingGuard() {
 
   useEffect(() => {
     if (isLoadingAuth || businessLoading || !user) return;
+
     const onOnboarding = location.pathname === "/onboarding";
+
+    // Still loading — don't redirect yet
+    if (businessLoading) return;
 
     if (!currentBusiness) {
       if (!onOnboarding) {
