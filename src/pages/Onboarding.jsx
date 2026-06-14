@@ -102,9 +102,13 @@ export default function Onboarding() {
           .eq('id', bestehendeFirma.id);
       } else {
         // Create new company profile
-        await supabase
+        const { data: insertResult, error: insertError } = await supabase
           .from('company_profiles')
-          .insert(cleanData);
+          .insert(cleanData)
+        if (insertError) {
+          console.error('Insert error:', insertError)
+          console.error('Clean data:', cleanData)
+        }
       }
 
       // When onboarding completes — create the business record
