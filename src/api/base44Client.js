@@ -1,14 +1,26 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
-
-const { appId, token, functionsVersion, appBaseUrl } = appParams;
-
-//Create a client with authentication required
-export const base44 = createClient({
-  appId,
-  token,
-  functionsVersion,
-  serverUrl: '',
-  requiresAuth: false,
-  appBaseUrl
-});
+// Base44 SDK disabled - migrated to Supabase
+// This file kept for backwards compatibility with
+// any remaining imports
+export const base44 = {
+  auth: {
+    me: async () => null,
+    isAuthenticated: async () => false,
+  },
+  entities: new Proxy({}, {
+    get: () => new Proxy({}, {
+      get: () => async () => [],
+    })
+  }),
+  functions: {
+    invoke: async () => ({ data: null }),
+  },
+  connectors: {
+    connectAppUser: async () => '#',
+    disconnectAppUser: async () => {},
+  },
+  integrations: {
+    Core: {
+      UploadFile: async () => ({ file_url: '' }),
+    }
+  },
+}
