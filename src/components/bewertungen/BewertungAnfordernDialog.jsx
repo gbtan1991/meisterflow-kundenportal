@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Send, Save } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabase";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
@@ -20,12 +20,23 @@ export default function BewertungAnfordernDialog({ open, onOpenChange }) {
 
   const { data: kunden = [] } = useQuery({
     queryKey: ["kunden"],
-    queryFn: () => base44.entities.Kunde.list("-created_date", 500),
+    queryFn: () =>
+      supabase
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500)
+        .then(({ data }) => data ?? []),
     enabled: open,
   });
 
   const erstellen = useMutation({
-    mutationFn: (data) => base44.entities.Bewertung.create(data),
+    mutationFn: async (data) => {
+      const { error } = await supabase
+        .from('reviews')
+        .insert(data)
+      if (error) throw error
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bewertungen"] });
     },
