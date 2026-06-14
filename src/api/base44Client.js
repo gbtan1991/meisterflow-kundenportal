@@ -1,6 +1,4 @@
-// Base44 SDK disabled - migrated to Supabase
-// This file kept for backwards compatibility with
-// any remaining imports
+// Base44 SDK completely disabled - migrated to Supabase
 export const base44 = {
   auth: {
     me: async () => null,
