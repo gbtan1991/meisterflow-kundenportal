@@ -91,18 +91,20 @@ export default function Onboarding() {
       onboarding_abgeschlossen: fertig,
     };
 
+    const { eigene_dienstleistung, ...cleanData } = data;
+
     try {
       if (bestehendeFirma?.id) {
         // Update existing company profile
         await supabase
           .from('company_profiles')
-          .update(data)
+          .update(cleanData)
           .eq('id', bestehendeFirma.id);
       } else {
         // Create new company profile
         await supabase
           .from('company_profiles')
-          .insert(data);
+          .insert(cleanData);
       }
 
       // When onboarding completes — create the business record
