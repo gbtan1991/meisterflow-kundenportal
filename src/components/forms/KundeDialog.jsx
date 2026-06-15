@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import FormDialog from "./FormDialog";
 
-const LEER = { firma: "", vorname: "", nachname: "", email: "", telefon: "", adresse: "", plz: "", ort: "", status: "aktiv", notizen: "" };
+const LEER = { vorname: "", nachname: "", email: "", telefon: "", adresse: "", plz: "", ort: "", status: "aktiv", notizen: "" };
 
 export default function KundeDialog({ open, onOpenChange }) {
   const [form, setForm] = useState(LEER);
@@ -41,10 +41,6 @@ export default function KundeDialog({ open, onOpenChange }) {
       saving={create.isPending}
       onSubmit={() => create.mutate(form)}
     >
-      <div className="space-y-1.5">
-        <Label>Firma</Label>
-        <Input value={form.firma} onChange={set("firma")} placeholder="z. B. Malerbetrieb Huber AG" />
-      </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Vorname</Label>
