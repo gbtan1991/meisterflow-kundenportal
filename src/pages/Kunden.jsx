@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useBusiness } from '@/context/BusinessContext'
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,16 +18,19 @@ export default function Kunden() {
   const [importing, setImporting] = useState(false);
   const csvRef = useRef(null);
   const qc = useQueryClient();
+  const { currentBusiness } = useBusiness()
 
   const { data: kunden = [], isLoading } = useQuery({
-    queryKey: ["kunden"],
+    queryKey: ["kunden", currentBusiness?.id],
     queryFn: () =>
       supabase
         .from('customers')
         .select('*')
+        .eq('business_id', currentBusiness?.id)
         .order('created_at', { ascending: false })
         .limit(500)
         .then(({ data }) => data ?? []),
+    enabled: !!currentBusiness?.id,
   });
 
   const filtered = kunden.filter((k) =>
