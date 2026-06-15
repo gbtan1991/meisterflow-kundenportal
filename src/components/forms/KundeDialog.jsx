@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useBusiness } from '@/context/BusinessContext'
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -11,11 +12,16 @@ const LEER = { firma: "", vorname: "", nachname: "", email: "", telefon: "", adr
 export default function KundeDialog({ open, onOpenChange }) {
   const [form, setForm] = useState(LEER);
   const qc = useQueryClient();
+  const { currentBusiness } = useBusiness()
 
   const create = useMutation({
     mutationFn: async (d) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from('customers').insert({ ...d, user_id: user.id });
+      const { error } = await supabase.from('customers').insert({
+        ...d,
+        user_id: user.id,
+        business_id: currentBusiness?.id,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
