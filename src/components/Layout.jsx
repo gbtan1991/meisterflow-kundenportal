@@ -12,9 +12,11 @@ import {
   Home,
   Building2,
   Globe,
+  LogOut,
 } from "lucide-react";
 import { useOnboardingGuard } from "@/lib/useOnboardingGuard";
 import { cn } from "@/lib/utils";
+import { supabase } from '@/lib/supabase'
 
 const NAV = [
   { label: "Übersicht", path: "/", icon: LayoutGrid },
@@ -31,6 +33,10 @@ export default function Layout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   useOnboardingGuard();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+  }
 
   const isActive = (path) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -71,6 +77,16 @@ export default function Layout() {
                   {label}
                 </Link>
               ))}
+              <button
+                onClick={handleLogout}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                )}
+              >
+                <LogOut className="w-4 h-4" />
+                Abmelden
+              </button>
             </nav>
 
             <button
@@ -100,6 +116,16 @@ export default function Layout() {
                 {label}
               </Link>
             ))}
+            <button
+              onClick={() => { handleLogout(); setMobileOpen(false); }}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium",
+                "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              )}
+            >
+              <LogOut className="w-4 h-4" />
+              Abmelden
+            </button>
           </nav>
         )}
       </header>
